@@ -1,5 +1,7 @@
 package com.ll.exam.music_payments.app.member.service;
 
+import com.ll.exam.music_payments.app.cash.entity.CashLog;
+import com.ll.exam.music_payments.app.cash.service.CashService;
 import com.ll.exam.music_payments.app.member.entity.Member;
 import com.ll.exam.music_payments.app.member.exception.AlreadyJoinException;
 import com.ll.exam.music_payments.app.member.repository.MemberRepository;
@@ -16,6 +18,7 @@ import java.util.Optional;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CashService cashService;
 
     public Member join(String username, String password, String email) {
         if (memberRepository.findByUsername(username).isPresent()) {
@@ -36,5 +39,20 @@ public class MemberService {
     @Transactional(readOnly = true)
     public Optional<Member> findByUsername(String username) {
         return memberRepository.findByUsername(username);
+    }
+
+    @Transactional
+    public long addCash(Member member, long price, String eventType) {
+        CashLog cashLog = cashService.addCash(member, price, eventType);
+
+        long newRestCash = member.getRestCash() + cashLog.getPrice();
+        member.setRestCash(newRestCash);
+        memberRepository.save(member);
+
+        return newRestCash;
+    }
+
+    public long getRestCash(Member member) {
+        return member.getRestCash();
     }
 }
