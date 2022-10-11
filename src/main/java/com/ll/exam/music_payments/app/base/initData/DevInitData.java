@@ -1,6 +1,7 @@
 package com.ll.exam.music_payments.app.base.initData;
 
 import com.ll.exam.music_payments.app.member.service.MemberService;
+import com.ll.exam.music_payments.app.product.service.ProductService;
 import com.ll.exam.music_payments.app.song.service.SongService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -11,9 +12,9 @@ import org.springframework.context.annotation.Profile;
 @Profile("dev")
 public class DevInitData implements InitDataBefore {
     @Bean
-    CommandLineRunner initData(MemberService memberService, SongService songService) {
+    CommandLineRunner initData(MemberService memberService, SongService songService, ProductService productService) {
         return args -> {
-            before(memberService, songService);
+            before(memberService, songService, productService);
         };
     }
 }
