@@ -2,6 +2,7 @@ package com.ll.exam.music_payments.app.order.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ll.exam.music_payments.app.member.service.MemberService;
 import com.ll.exam.music_payments.app.order.exception.ActorCanNotSeeOrderException;
 import com.ll.exam.music_payments.app.member.entity.Member;
 import com.ll.exam.music_payments.app.order.entity.Order;
@@ -40,6 +41,7 @@ public class OrderController {
     private final OrderService orderService;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper;
+    private final MemberService memberService;
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
@@ -48,11 +50,14 @@ public class OrderController {
 
         Member actor = memberContext.getMember();
 
+        long restCash = memberService.getRestCash(actor);
+
         if (orderService.actorCanSee(actor, order) == false) {
             throw new ActorCanNotSeeOrderException();
         }
 
         model.addAttribute("order", order);
+        model.addAttribute("actorRestCash", restCash);
 
         return "order/detail";
     }
