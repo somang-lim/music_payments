@@ -10,10 +10,10 @@
     <script src="https://js.tosspayments.com/v1"></script>
 
     <script th:inline="javascript">
-        const orderId = /* [[${order.id}]] */ null;
-        const buyerName = /* [[${order.buyer.name}]] */ null;
-        const orderName = /* [[${order.name}]] */ null;
-        const orderPayPrice = /* [[${order.calculatePayPrice}]] */ null;
+        const orderId = /*[[ ${order.id} ]]*/ null;
+        const buyerName = /*[[ ${order.buyer.name} ]]*/ null;
+        const orderName = /*[[ ${order.name} ]]*/ null;
+        const orderPayPrice = /*[[ ${order.calculatePayPrice} ]]*/ null;
     </script>
 
     <script>
@@ -24,16 +24,17 @@
 
             const paymentData = {
                 amount: orderPayPrice,
-                orderId: "order__" + orderId,
+                orderId: "order__" + orderId + "__" + (Math.random() + "").substring(2),
                 orderName,
                 customerName: buyerName,
-                successUrl: window.location.origin + "/success",
-                failUrl: window.location.origin + "/fail",
+                successUrl: window.location.origin + "/order/" + orderId + "/success",
+                failUrl: window.location.origin + "/order/" + orderId + "/fail"
             };
 
             tossPayments.requestPayment(method, paymentData);
         }
     </script>
+
 
     <section class="section section-write container mx-auto">
         <div class="px-2 pt-4">
