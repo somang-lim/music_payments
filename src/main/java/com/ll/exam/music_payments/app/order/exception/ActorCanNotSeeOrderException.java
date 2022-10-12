@@ -1,4 +1,4 @@
-package com.ll.exam.music_payments.app.exception;
+package com.ll.exam.music_payments.app.order.exception;
 
 public class ActorCanNotSeeOrderException extends RuntimeException {
 }

@@ -2,15 +2,16 @@ package com.ll.exam.music_payments.app.order.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ll.exam.music_payments.app.exception.ActorCanNotSeeOrderException;
+import com.ll.exam.music_payments.app.order.exception.ActorCanNotSeeOrderException;
 import com.ll.exam.music_payments.app.member.entity.Member;
 import com.ll.exam.music_payments.app.order.entity.Order;
+import com.ll.exam.music_payments.app.order.exception.OrderIdNotMatchedException;
 import com.ll.exam.music_payments.app.order.service.OrderService;
 import com.ll.exam.music_payments.app.security.dto.MemberContext;
+import com.ll.exam.music_payments.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,7 +29,6 @@ import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.net.URI;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,8 +75,19 @@ public class OrderController {
 
     @RequestMapping("/{id}/success")
     public String confirmPayment(
-            @RequestParam String paymentKey, @RequestParam String orderId, @RequestParam Long amount,
-            Model model) throws Exception {
+            @PathVariable long id,
+            @RequestParam String paymentKey,
+            @RequestParam String orderId,
+            @RequestParam Long amount,
+            Model model
+    ) throws Exception {
+        Order order = orderService.findForPrintById(id).get();
+
+        long orderIdInputed = Long.parseLong(orderId.split("__")[1]);
+
+        if (id != orderIdInputed) {
+            throw new OrderIdNotMatchedException();
+        }
 
         HttpHeaders headers = new HttpHeaders();
         // headers.setBasicAuth(SECRET_KEY, ""); // spring framework 5.2 이상 버전에서 지원
@@ -85,7 +96,7 @@ public class OrderController {
 
         Map<String, String> payloadMap = new HashMap<>();
         payloadMap.put("orderId", orderId);
-        payloadMap.put("amount", String.valueOf(amount));
+        payloadMap.put("amount", String.valueOf(order.calculatePayPrice()));
 
         HttpEntity<String> request = new HttpEntity<>(objectMapper.writeValueAsString(payloadMap), headers);
 
@@ -93,10 +104,9 @@ public class OrderController {
                 "https://api.tosspayments.com/v1/payments/" + paymentKey, request, JsonNode.class);
 
         if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            JsonNode successNode = responseEntity.getBody();
-            model.addAttribute("orderId", successNode.get("orderId").asText());
-            String secret = successNode.get("secret").asText(); // 가상계좌의 경우 입금 callback 검증을 위해서 secret을 저장하기를 권장함
-            return "order/success";
+            orderService.payByTossPayments(order);
+
+            return "redirect:/order/%d?msg=%s".formatted(order.getId(), Ut.url.encode("결제가 완료되었습니다."));
         } else {
             JsonNode failNode = responseEntity.getBody();
             model.addAttribute("message", failNode.get("message").asText());
