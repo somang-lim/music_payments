@@ -1,6 +1,8 @@
 package com.ll.exam.music_payments.app.rebate.entity;
 
 import com.ll.exam.music_payments.app.base.entity.BaseEntity;
+import com.ll.exam.music_payments.app.cash.entity.CashLog;
+import com.ll.exam.music_payments.app.member.entity.Member;
 import com.ll.exam.music_payments.app.order.entity.Order;
 import com.ll.exam.music_payments.app.order.entity.OrderItem;
 import com.ll.exam.music_payments.app.product.entity.Product;
@@ -54,11 +56,22 @@ public class RebateOrderItem extends BaseEntity {
     private boolean isPaid; // 결제여부
     private LocalDateTime payDate; // 결제날짜
 
+    @ManyToOne(fetch = LAZY)
+    @ToString.Exclude
+    @JoinColumn(foreignKey = @ForeignKey(NO_CONSTRAINT))
+    private CashLog rebateCashLog; // 정산에 관련된 환급지급내역
+
     // 상품
     private String productSubject;
 
     // 주문날짜
     private LocalDateTime orderItemCreateDate;
+
+    @ManyToOne(fetch = LAZY)
+    @ToString.Exclude
+    @JoinColumn(foreignKey = @ForeignKey(NO_CONSTRAINT))
+    private Member buyer;
+    private String buyerName;
 
     public RebateOrderItem(OrderItem orderItem) {
         this.orderItem = orderItem;
@@ -79,5 +92,8 @@ public class RebateOrderItem extends BaseEntity {
         // 주문날짜
         orderItemCreateDate = orderItem.getCreateDate();
 
+        // 주문자 이름
+        buyer = orderItem.getOrder().getBuyer();
+        buyerName = orderItem.getOrder().getBuyer().getName();
     }
 }
